@@ -1,0 +1,9 @@
+<ModMetaData>
+    <name>Armed agressive Colonist</name>
+<description>This mod adds the behavior for your colonists to always grab weapons if they're not busy with duties and switch behavior to agressive towards enemines</description>
+    <author>CRASH</author>
+    <supportedVersions>
+		<li>1.5</li>
+    </supportedVersions>
+    <packageId>crash.alwaysTakeWeaponAndBeAgressive</packageId>
+</ModMetaData>
