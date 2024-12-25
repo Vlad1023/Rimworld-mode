@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <JobDef>
+    <defName>EquipWeapon</defName>
+    <driverClass>JobDriver_EquipWeapon</driverClass>
+    <reportString>equipping TargetA.</reportString>
+    <allowOpportunisticPrefix>true</allowOpportunisticPrefix>
+  </JobDef>
+  
+
+  <ThinkTreeDef>
+    <defName>Colonist_PickUpWeapon</defName>
+	<insertTag>Humanlike_PostDuty</insertTag>
+    <thinkRoot Class="ThinkNode_Priority">  <!-- not sure if it even needed here -->
+      <subNodes>
+		<li Class="ThinkNode_ConditionalColonist">
+          <subNodes>
+            <li Class="JobGiver_PickUpWeapon" />
+          </subNodes>
+        </li>	
+      </subNodes>
+    </thinkRoot>
+  </ThinkTreeDef>
+
+
+
+</Defs>
