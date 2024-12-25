@@ -1,3 +1,3 @@
 # Rimworld-mode
 
-Mode for one of my favourites games Rimworld which adjusts behaviour of colonists
+This mod adds the behavior for your colonists to always grab weapons if they're not busy with duties and switch behavior to agressive towards enemines
