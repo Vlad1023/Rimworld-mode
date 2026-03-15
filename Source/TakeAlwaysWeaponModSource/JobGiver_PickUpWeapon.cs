@@ -117,19 +117,33 @@ namespace Rimworld
         return true;
       }
 
-      private bool ShouldEquipWeapon(Thing newWep, Pawn pawn)
-      {
-        return (!newWep.def.IsRangedWeapon || !pawn.WorkTagIsDisabled(WorkTags.Shooting)) && EquipmentUtility.CanEquip(newWep, pawn) && this.GetWeaponScore(newWep) > this.GetWeaponScore((Thing) pawn.equipment.Primary) && SlaveRebellionUtility.WeaponUsableInRebellion(newWep);
-      }
+        private bool ShouldEquipWeapon(Thing newWep, Pawn pawn)
+        {
+            if (newWep == null) return false;
 
-      private int GetWeaponScore(Thing wep)
-      {
-        if (wep == null || wep.def.IsMeleeWeapon && (double) wep.GetStatValue(StatDefOf.MeleeWeapon_AverageDPS) < (double) this.MinMeleeWeaponDPSThreshold)
-          return 0;
-        if (this.preferBuildingDestroyers && wep.TryGetComp<CompEquippable>().PrimaryVerb.verbProps.ai_IsBuildingDestroyer)
-          return 3;
-        return wep.def.IsRangedWeapon ? 2 : 1;
-      }
+            if (newWep.def.IsRangedWeapon && pawn.WorkTagIsDisabled(WorkTags.Shooting))
+                return false;
+
+            if (!EquipmentUtility.CanEquip(newWep, pawn))
+                return false;
+
+            if (!SlaveRebellionUtility.WeaponUsableInRebellion(newWep))
+                return false;
+
+            int newScore = GetWeaponScore(newWep);
+            int currentScore = GetWeaponScore(pawn.equipment?.Primary);
+
+            return newScore > currentScore;
+        }
+
+        private int GetWeaponScore(Thing wep)
+        {
+            if (wep == null || wep.def.IsMeleeWeapon && (double) wep.GetStatValue(StatDefOf.MeleeWeapon_AverageDPS) < (double) this.MinMeleeWeaponDPSThreshold)
+                return 0;
+            if (this.preferBuildingDestroyers && wep.TryGetComp<CompEquippable>().PrimaryVerb.verbProps.ai_IsBuildingDestroyer)
+                return 3;
+            return wep.def.IsRangedWeapon ? 2 : 1;
+        }
 
       private bool WouldPickupUtilityItem(Pawn pawn)
       {
