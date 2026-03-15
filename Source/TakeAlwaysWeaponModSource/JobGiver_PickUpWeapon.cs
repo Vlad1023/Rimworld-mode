@@ -8,10 +8,13 @@ namespace Rimworld
 {
     public class JobGiver_PickUpWeapon : ThinkNode_JobGiver
     {    
+        const float searchDistance = 200f;
+
+
         private bool preferBuildingDestroyers;
         private bool pickUpUtilityItems;
-      
-        private static Dictionary<Pawn, int> lastJobTick = new Dictionary<Pawn, int>();
+
+        private static Dictionary<int, int> lastJobTick = new Dictionary<int, int>();
 
         private float MinMeleeWeaponDPSThreshold
         {
@@ -42,10 +45,9 @@ namespace Rimworld
         protected override Job TryGiveJob(Pawn pawn)
         {
             int currentTick = Find.TickManager.TicksGame;
-            if (lastJobTick.ContainsKey(pawn) && currentTick - lastJobTick[pawn] < 100)
-            {
-                return null; // Too soon to assign any of the followed jobs again
-            }
+            int id = pawn.thingIDNumber;
+            if (lastJobTick.TryGetValue(id, out int tick) && currentTick - tick < 100)
+                return null;
             if ((pawn.equipment == null && pawn.apparel == null) || pawn.CurJob?.def == JobDefOfEquipWeapon.EquipWeapon)
                 return (Job) null;
             if (pawn.RaceProps.Humanlike && pawn.WorkTagIsDisabled(WorkTags.Violent))
@@ -56,14 +58,14 @@ namespace Rimworld
                 return (Job) null;
             if (pawn.equipment != null && !this.AlreadySatisfiedWithCurrentWeapon(pawn))
             {
-                Thing targetA = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Weapon), PathEndMode.Touch, TraverseParms.For(pawn), 500f, (Predicate<Thing>) (x => pawn.CanReserve((LocalTargetInfo) x) && !x.IsBurning() && this.ShouldEquipWeapon(x, pawn)));
+                Thing targetA = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Weapon), PathEndMode.Touch, TraverseParms.For(pawn), searchDistance, (Predicate<Thing>) (x => pawn.CanReserve((LocalTargetInfo) x) && !x.IsBurning() && this.ShouldEquipWeapon(x, pawn)));
                 if (targetA != null)
                 {
                 pawn.playerSettings.hostilityResponse = HostilityResponseMode.Attack; // so pawn is able to attack but it just a question of finding weapon.
                 var job = JobMaker.MakeJob(JobDefOfEquipWeapon.EquipWeapon, (LocalTargetInfo)targetA);
                 if (job != null)
                 {
-                    lastJobTick[pawn] = currentTick; // Record when the job was assigned
+                    lastJobTick[id] = currentTick; // Record when the job was assigned
                 }
                 return job;
                 }
@@ -132,6 +134,11 @@ namespace Rimworld
             int newScore = GetWeaponScore(newWep);
             int currentScore = GetWeaponScore(pawn.equipment?.Primary);
 
+            if(newWep.TryGetQuality(out QualityCategory newWepQuality) && pawn.equipment?.Primary?.TryGetQuality(out QualityCategory currentWepQuality) == true)
+            {
+                return newScore > currentScore || (newScore == currentScore && newWepQuality > currentWepQuality);
+            }
+
             return newScore > currentScore;
         }
 
@@ -139,7 +146,7 @@ namespace Rimworld
         {
             if (wep == null || wep.def.IsMeleeWeapon && (double) wep.GetStatValue(StatDefOf.MeleeWeapon_AverageDPS) < (double) this.MinMeleeWeaponDPSThreshold)
                 return 0;
-            if (this.preferBuildingDestroyers && wep.TryGetComp<CompEquippable>().PrimaryVerb.verbProps.ai_IsBuildingDestroyer)
+            if (this.preferBuildingDestroyers && wep.TryGetComp<CompEquippable>()?.PrimaryVerb?.verbProps?.ai_IsBuildingDestroyer == true)
                 return 3;
             return wep.def.IsRangedWeapon ? 2 : 1;
         }
